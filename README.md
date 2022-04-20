@@ -1,7 +1,77 @@
-#gin-api
+# gin-api
 gin-api 是一款基于 `gin` 开发的 golang api 框架，其已涵盖日常接口开发时所需要的基础功能。
 
-这些功能包括：
+
+## 启动项目
+第一步：下载
+```go
+$ git clone git@github.com:Node1650665999/go-api.git 
+```
+
+第二步：生成 .env 文件，并设置相关参数，例如数据库账号密码，redis账号密码等：
+```go
+$ cp .env.example .env
+
+$ cat .env
+APP_NAME=go-api
+APP_ENV=local
+APP_KEY=base64:QDvuvqT2HD2s6CEXvXe/gDbv3iGkjluwQJIUdXkf8Dg=
+APP_DEBUG=true
+APP_URL=http://localhost
+APP_PORT=8089
+
+#日志相关
+LOG_SIZE=5
+EXCEPT_URI=/asset/
+LOG_TYPE=daily
+
+DB_DRIVER=mysql
+DB_USER=root
+DB_PASSWORD="YjERlZxXhyB$#Cjf"
+DB_HOST=8.129.104.24
+DB_PORT=3506
+DB_DATABASE=hzg_union
+
+REDIS_HOST=192.168.1.1
+REDIS_PORT=1234
+REDIS_AUTH=123456
+
+EMAIL_NOTICE=false
+EMAIL_TO=to
+EMAIL_PORT=456
+EMAIL_USER=user
+EMAIL_PASSWORD=password
+EMAIL_SSl=true
+EMAIL_FROM=from
+```
+第三步：启动项目
+```go
+$ go run index.go
+```
+
+查看帮助信息：
+```go
+$ go run index.go -h
+Default will run "serve" command, you can use "-h" flag to see all subcommands
+
+Usage:
+[command]
+
+Available Commands:
+completion  Generate the autocompletion script for the specified shell
+help        Help about any command
+serve       Start web server
+
+Flags:
+-e, --env string   load .env file, example: --env=testing will use .env.testing file
+-h, --help         help for this command
+
+Use " [command] --help" for more information about a command.
+
+```
+
+# 使用说明
+go-api 包含如下功能：
 - 配置文件
 - 路由
 - 中间件
@@ -11,10 +81,8 @@ gin-api 是一款基于 `gin` 开发的 golang api 框架，其已涵盖日常�
 - 接口响应
 - 静态资源打包
 - 日志处理
-- 命令行处理
 - 数据库
 - 容器化部署
-
 下面我们分别介绍相关功能的使用。
 
 ## 配置文件
@@ -491,7 +559,7 @@ func Log(name string, text interface{}, logFile... string) {
 ```
 
 RuntimeLog() :
-> 用来记录 panic 引起的错误日志，该日志会写入 `runtime/logs/{date}.log` 以天进行滚动的日志文件中。该日志函数由系统自身调用，用户无需使用。
+> 用来记录 panic 引起的错误日志，该日志会写入 `runtime/logs/{date}.log` 以天进行滚动的日志文件中。该日志函数由系统自身调用，用户无需关注。
 
 AccessLog()  :
 > 用来记录接口访问日志，会将接口路径映射生成对应的日志目录，并在其中写入访问日志，该函数由中间件自动调用，用户无需关注。
@@ -499,3 +567,178 @@ AccessLog()  :
 Log() :
 > 用来给用户使用的，用户可以自定义日志存储目录，默认情况下会以调用Log()方法所在的包为路径生成对应的目录，并在其中写入访问日志。 
 
+## 数据库
+系统在 GORM 封装了一个查询构造器 `application/http/model/Builder.go` ，其包含一系列辅助函数用来快速进行 CRUD 等操作。
+
+下面给出该查询构造器的一些使用案例。
+
+1. 首先新增模型 `application/http/model/UserModel.go`
+```go
+type User struct {
+	ID            uint      `json:"id"`
+	Username      string    `json:"username"` // 用户名
+	Phone         string    `json:"phone"`    // 手机号码
+}
+
+//TableName 重写表名
+func (* User) TableName() string {
+	return "union_users"
+}
+
+func NewUser() *User {
+	u  := &User{}
+	return u
+}
+```
+因为我们的数据表名不总是按照 GORM 的规则来映射 Struct 名称，因此更多时候显示定义 `TableName()` 来告诉 GORM 映射的表名。 
+
+2. 模型创建好了后，接下来利用该模型来进行增删查改。
+
+```go
+func TestInsert(t *testing.T) {
+	
+	//也支持map格式插入数据
+	/*user := map[string]interface{}{
+		"username" : "tcl",
+		"phone" : "1388888888",
+	}*/
+
+	user := User{
+		Username: "tcl",
+		Phone:    "1388888888",
+	}
+
+	rows := Create(&user)
+	fmt.Printf("%+v\n", user)
+	fmt.Println(user.ID)
+	fmt.Println(rows)
+}
+
+func TestBatchInsert(t *testing.T) {
+	users := []User{
+		{
+			Username: "tcl1",
+			Phone:    "13135677653",
+		},
+		{
+			Username: "tcl2",
+			Phone:    "13135677655",
+		},
+	}
+
+	rows := CreateBatch(&users, len(users)/2)
+	fmt.Printf("%+v\n", users)
+	for _, user := range users {
+		fmt.Println(user.ID)
+	}
+	fmt.Println(rows)
+}
+
+func TestUpdate(t *testing.T) {
+	data := User{
+		Username: "tcl",
+		Phone:    "13877777777",
+	}
+	where := "id in (3,4) and is_del=1"
+	rows := Updates(data, where)
+	fmt.Println(rows)
+}
+
+type Extract struct {
+	Id       int    `json:"id"`
+	Username string `json:"username"`
+}
+
+//TestTake 获取单行数据
+func TestTake(t *testing.T) {
+	var user User
+	var extract Extract
+
+	where := ""
+	Take(&user, where, "id desc")
+
+	//提取字段
+	helpers.Extract(user, &extract)
+	fmt.Printf("%+v\n", user)
+	fmt.Printf("%+v\n", extract)
+	fmt.Println(helpers.JsonEncode(extract))
+}
+
+//TestFind 获取多行数据
+func TestFind(t *testing.T) {
+	var users []User
+	var extracts []Extract
+
+	where := "age=20"
+	Find(&users, where, "id desc")
+
+	//提取字段
+	helpers.Extract(users, &extracts)
+	fmt.Printf("%+v\n", users)
+	fmt.Printf("%+v\n", extracts)
+	fmt.Println(helpers.JsonEncode(extracts))
+}
+
+//TestFindPage 分页获取数据
+func TestFindPage(t *testing.T) {
+	var users []User
+
+	where := "id > 6"
+	page := 2     //当前页
+	pageSize := 2 //每页数量
+
+	rows := FindPage(&users, where, "id desc", page, pageSize)
+
+	fmt.Printf("%d\n", rows)
+	fmt.Printf("%+v\n", users)
+
+	data := map[string]interface{}{
+		"list":     users,
+		"paginate": GetPaginate(),
+	}
+	fmt.Println(helpers.JsonEncode(data))
+}
+
+//TestColumn 获取单列
+func TestColumn(t *testing.T) {
+	where := "age > 20"
+	phones := []string{}
+	Column(&phones, "phone", where)
+	fmt.Println(phones)
+}
+
+//TestDelete 删除
+func TestDelete(t *testing.T) {
+	where := "id = 27"
+	rows := Delete(&User{}, where)
+	fmt.Println(rows)
+}
+
+//TestTansAction 事务处理
+func TestTansAction(t *testing.T) {
+    user := User{
+        Username: "tcl",
+        Phone:    "1388888888",
+    }
+    
+    //开启事务
+    TransStart()
+    
+    rows := Create(&user)
+    if rows == 0 {
+        //回滚事务
+        TransRollback()
+        return
+    }
+    
+    where := fmt.Sprintf("id=%d", user.ID)
+    if Delete(user, where) == 0 {
+        TransRollback()
+        return
+    }
+    
+    //事务提交
+    TransCommit()
+    fmt.Println("success")
+}
+```

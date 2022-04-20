@@ -67,8 +67,6 @@ func New(options ...Option) *Application {
 	once.Do(func() {
 		app = &Application{
 			TraceId:       "", //TODO
-			//EmbedAsset:    assets,
-			//EmbedTemplate: views,
 		}
 
 		rootPath, _ := os.Getwd()
