@@ -83,6 +83,7 @@ go-api 包含如下功能：
 - 日志处理
 - 数据库
 - 容器化部署
+
 下面我们分别介绍相关功能的使用。
 
 ## 配置文件
@@ -361,9 +362,9 @@ func (u *UserController) Info(c *gin.Context) {
 }
 ```
 
-1. 验证时我们首先创建好要绑定的 Struct，并且在 Struct tag 的`form` 和 `binding` 字段设置好映射的字段和验证规则。
-2. 最后验证时是调用框架本身已封装好的验证函数 `validate.BindAndValid()` 就行了。
-3. 如果验证失败，验证函数会返回对应的错误信息，如果验证通过，则相应的参数值会挂在 Struct 对象上，交由后续的逻辑处理就行了。
+1. 首先验证时创建好要绑定的 Struct，并且在 Struct tag 的`form` 和 `binding` 字段设置好映射的字段和验证规则。
+2. 接着调用框架本身已封装好的验证函数 `validate.BindAndValid()` 就行了。
+3. 最周如果验证失败，验证函数会返回对应的错误信息，如果验证通过，则相应的参数值会挂在 Struct 对象上，交由后续的逻辑处理就行了。
 
 关于 `go-playground` 的更多见 https://github.com/go-playground/validator。
 
@@ -590,7 +591,8 @@ func NewUser() *User {
 	return u
 }
 ```
-因为我们的数据表名不总是按照 GORM 的规则来映射 Struct 名称，因此更多时候显示定义 `TableName()` 来告诉 GORM 映射的表名。 
+
+> 因为我们的数据表名不总是按照 GORM 的规则来映射 Struct 名称，因此更多时候显示定义 `TableName()` 来告诉 GORM 映射的表名。 
 
 2. 模型创建好了后，接下来利用该模型来进行增删查改。
 
