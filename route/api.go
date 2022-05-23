@@ -2,7 +2,6 @@ package route
 
 import (
 	"gin-api/application/errcode"
-	"gin-api/application/http/controller"
 	"gin-api/application/middleware"
 	"gin-api/pkg/jwt"
 	"gin-api/pkg/response"
@@ -53,7 +52,9 @@ func RegisterApiRouter(r *gin.Engine) *gin.Engine {
 		//带有版本号的接口
 		v1 := api.Group("/v1").Use(middleware.LimitRoute("2-M"))
 		{
-			v1.Any("/info", middleware.JwtAuth(), controller.NewUserController().Info)
+			v1.Any("/info", middleware.JwtAuth(), func(ctx *gin.Context) {
+				response.Json(errcode.Success, "success", gin.H{"version": "v1"})
+			})
 		}
 	}
 

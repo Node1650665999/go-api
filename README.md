@@ -744,3 +744,9 @@ func TestTansAction(t *testing.T) {
     fmt.Println("success")
 }
 ```
+
+## 容器化部署
+```shell
+$ make build 
+$ make run 
+```

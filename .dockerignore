@@ -1,0 +1,6 @@
+Dockerfile
+!README.md
+.env*
+runtime
+.git
+.idea
