@@ -15,6 +15,7 @@ func SetupRoute(router *gin.Engine) {
 
 //registerMiddleware 注册中间件
 func registerMiddleware(router *gin.Engine) {
+	router.Use(gin.Logger())
 	router.Use(middleware.MountApp())
 	router.Use(middleware.Catch())
 	router.Use(middleware.Cors())
