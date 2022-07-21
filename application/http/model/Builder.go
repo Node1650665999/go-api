@@ -2,11 +2,11 @@ package model
 
 import (
 	"fmt"
+	"gin-api/pkg/logger"
 	"gorm.io/gorm"
 	gorm_logger "gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 	"math"
-	"gin-api/pkg/logger"
 	"sync"
 	"time"
 )
@@ -131,28 +131,24 @@ func FindPage(model interface{}, where string, order string, page, pageSize int)
 }
 
 //SetPaginate 初始化分页存储对象
-func SetPaginate(page, pageSize, count int) *Paginate {
+func SetPaginate(page, pageSize, total int) *Paginate {
+	//边界处理：第一页
+	if page < 0 {
+		page = 1
+	}
+
+	//边界处理：每页数量
+	switch {
+	case pageSize > 50:
+		pageSize = 50
+	case pageSize <= 0:
+		pageSize = 20
+	}
 
 	//总页数
-	pages := 0
-	if pageSize > 0 {
-		pages = int(math.Ceil(float64(count) / float64(pageSize)))
-	}
-
-	//当前页
-	switch {
-	case page <= 0:
-		page = 1
-	case pages > 0 && page >= pages:
-		page = pages
-	}
-
-	//每页数量
-	switch {
-	case pageSize > 100:
-		pageSize = 100
-	case pageSize <= 0:
-		pageSize = 10
+	pageCount := int(math.Ceil(float64(total) / float64(pageSize)))
+	if page >= pageCount {
+		page = pageCount
 	}
 
 	offset := (page - 1) * pageSize
@@ -161,8 +157,8 @@ func SetPaginate(page, pageSize, count int) *Paginate {
 		Page:     page,
 		PageSize: pageSize,
 		Offset:   offset,
-		Total:    count,
-		Pages:    pages,
+		Total:    total,
+		Pages:    pageCount,
 	}
 
 	return pageObj
