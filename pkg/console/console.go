@@ -1,4 +1,3 @@
-// Package console 命令行辅助方法
 package console
 
 import (
@@ -9,22 +8,26 @@ import (
 )
 
 // Success 打印一条成功消息，绿色输出
-func Success(msg string) {
+func Success(format string, a ...interface{}) {
+	msg := fmt.Sprintf(format, a...)
 	colorOut(msg, "green")
 }
 
 // Error 打印一条报错消息，红色输出
-func Error(msg string) {
+func Error(format string, a ...interface{}) {
+	msg := fmt.Sprintf(format, a...)
 	colorOut(msg, "red")
 }
 
 // Warning 打印一条提示消息，黄色输出
-func Warning(msg string) {
+func Warning(format string, a ...interface{}) {
+	msg := fmt.Sprintf(format, a...)
 	colorOut(msg, "yellow")
 }
 
 // Exit 打印一条报错消息，并退出 os.Exit(1)
-func Exit(msg string) {
+func Exit(format string, a ...interface{}) {
+	msg := fmt.Sprintf(format, a...)
 	Error(msg)
 	os.Exit(1)
 }

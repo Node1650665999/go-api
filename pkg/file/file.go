@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 )
 
 //MkDir 创建一个目录
@@ -36,6 +37,7 @@ func Ext(fileName string) string {
 func BaseName(filename string) string  {
 	return path.Base(filename)
 }*/
+
 
 //FileExist 判断文件是否存在
 func FileExist(path string) bool {
@@ -87,6 +89,22 @@ func WriteFileSimple(file string, content string) (int, error) {
 	outputFile, _ := os.OpenFile(file, os.O_WRONLY|os.O_CREATE, 0666)
 	defer outputFile.Close()
 	return outputFile.WriteString(content)
+}
+
+// FIlePutContent 将数据存入文件, 	如果目录不存在, 则创建
+func FIlePutContent(data []byte, to string) error {
+	dir :=  filepath.Dir(to)
+	err := MkDir(dir)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(to, data, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ReadFileSimple 读取文件
