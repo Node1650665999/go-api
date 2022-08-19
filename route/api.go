@@ -15,7 +15,7 @@ func RegisterApiRouter(r *gin.Engine) *gin.Engine {
 	api.Use(middleware.LimitRouteAndIp("500-H"))
 	{
 		api.Any("/foo", func(ctx *gin.Context) {
-			response.Json(errcode.Success, "", nil)
+			response.Json(ctx, errcode.Success, "", nil)
 			return
 		})
 
@@ -33,7 +33,7 @@ func RegisterApiRouter(r *gin.Engine) *gin.Engine {
 			tokenGroup.Any("/get", func(ctx *gin.Context) {
 				user := gin.H{"name": "tcl", "age": 30}
 				token := jwt.GenerateToken(user, time.Hour)
-				response.Json(errcode.Success, "success", token)
+				response.Json(ctx, errcode.Success, "success", token)
 				return
 			})
 
@@ -41,9 +41,9 @@ func RegisterApiRouter(r *gin.Engine) *gin.Engine {
 			tokenGroup.Any("/fresh", middleware.JwtAuth(), func(ctx *gin.Context) {
 				token, err := jwt.RefreshToken(ctx.Request.FormValue("token"), time.Hour)
 				if err != nil {
-					response.Json(errcode.Fail, err.Error(), nil)
+					response.Json(ctx, errcode.Fail, err.Error(), nil)
 				} else {
-					response.Json(errcode.Success, "success", token)
+					response.Json(ctx, errcode.Success, "success", token)
 				}
 				return
 			})
@@ -53,7 +53,7 @@ func RegisterApiRouter(r *gin.Engine) *gin.Engine {
 		v1 := api.Group("/v1").Use(middleware.LimitRoute("2-M"))
 		{
 			v1.Any("/info", middleware.JwtAuth(), func(ctx *gin.Context) {
-				response.Json(errcode.Success, "success", gin.H{"version": "v1"})
+				response.Json(ctx, errcode.Success, "success", gin.H{"version": "v1"})
 			})
 		}
 	}

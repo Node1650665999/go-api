@@ -2,10 +2,10 @@ package middleware
 
 import (
 	"errors"
-	"github.com/gin-gonic/gin"
 	"gin-api/application/errcode"
 	"gin-api/pkg/jwt"
 	"gin-api/pkg/response"
+	"github.com/gin-gonic/gin"
 	"strings"
 )
 
@@ -21,7 +21,7 @@ func JwtAuth() gin.HandlerFunc {
 		if len(token) == 0 {
 			headerToken, err := getTokenFromHeader(c)
 			if err != nil {
-				response.JsonAbort(errcode.Unauthorized, err.Error(),nil)
+				response.JsonAbort(c, errcode.Unauthorized, err.Error(),nil)
 				return
 			}
 			token = headerToken
@@ -29,7 +29,7 @@ func JwtAuth() gin.HandlerFunc {
 
 		customClaims, err := jwt.VerifyToken(token)
 		if err != nil {
-			response.JsonAbort(errcode.Unauthorized, err.Error(),nil)
+			response.JsonAbort(c, errcode.Unauthorized, err.Error(),nil)
 			return
 		}
 		c.Set("custom_claims", customClaims)

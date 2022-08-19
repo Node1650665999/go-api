@@ -5,8 +5,9 @@ import "net/http"
 const (
 	Success         = 200
 	Fail            = 400
-	No              = 404
 	Unauthorized    = 401
+	Sign            = 402
+	No              = 404
 	TooManyRequests = 429
 	Fatal           = 500
 )
@@ -14,8 +15,9 @@ const (
 var textMap = map[int]string{
 	Success:         "成功",
 	Fail:            "失败",
-	No:              "路由不存在",
 	Unauthorized:    "认证失败",
+	Sign:            "签名失败",
+	No:              "路由不存在",
 	TooManyRequests: "请求太频繁",
 	Fatal:           "系统异常",
 }

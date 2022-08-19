@@ -1,19 +1,16 @@
 package response
 
 import (
-	"github.com/gin-gonic/gin"
 	"gin-api/application/errcode"
-	"gin-api/pkg/app"
+	"github.com/gin-gonic/gin"
 )
 
-var ctx *gin.Context
 
 //Json response json
-func Json(code int, msg string, data interface{}) {
+func Json(ctx *gin.Context, code int, msg string, data interface{}) {
 	if msg == "" {
 		msg = errcode.CodeText(code)
 	}
-	ctx = app.GetInstance().C
 	ctx.PureJSON(errcode.HttpCode(code), gin.H{
 		"code": code,
 		"msg":  msg,
@@ -23,8 +20,8 @@ func Json(code int, msg string, data interface{}) {
 }
 
 //JsonAbort response json and abort current request
-func JsonAbort(code int, msg string, data interface{})  {
-	Json(code, msg, data)
+func JsonAbort(ctx *gin.Context, code int, msg string, data interface{})  {
+	Json(ctx, code, msg, data)
 	ctx.Abort()
 	return
 }

@@ -33,6 +33,7 @@ func Catch() gin.HandlerFunc {
 
 				//客户端响应
 				response.Json(
+					c,
 					code,
 					"",
 					nil,

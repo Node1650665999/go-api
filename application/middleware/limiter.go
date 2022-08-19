@@ -13,7 +13,7 @@ func LimitIp(format string, driver ...int) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		key := c.ClientIP() + ":" + format
 		if err := Limiter(driver...).Check(key, format); err != nil {
-			response.JsonAbort(errcode.TooManyRequests, err.Error(),nil)
+			response.JsonAbort(c, errcode.TooManyRequests, err.Error(),nil)
 			return
 		}
 		c.Next()
@@ -25,7 +25,7 @@ func LimitRoute(format string, driver ...int) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		key    := c.FullPath()
 		if err := Limiter(driver...).Check(key, format); err != nil {
-			response.JsonAbort(errcode.TooManyRequests, err.Error(), nil)
+			response.JsonAbort(c, errcode.TooManyRequests, err.Error(), nil)
 			return
 		}
 		c.Next()
@@ -37,7 +37,7 @@ func LimitRouteAndIp(format string, driver ...int) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		key    := routeToKeyString(c.FullPath() + c.ClientIP())
 		if err := Limiter(driver...).Check(key, format); err != nil {
-			response.JsonAbort(errcode.TooManyRequests, err.Error(), nil)
+			response.JsonAbort(c, errcode.TooManyRequests, err.Error(), nil)
 			return
 		}
 		c.Next()
