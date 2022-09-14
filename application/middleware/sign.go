@@ -69,9 +69,12 @@ func signCheck(c *gin.Context) error {
 	//使用 & 拼接字段
 	str := ""
 	for _, key := range keys {
-		str += fmt.Sprintf("&%s=%v", key, allParams[key])
+		//非空参数才参与签名
+		if val, _ := allParams[key]; val != nil {
+			str += fmt.Sprintf("&%s=%v", key, allParams[key])
+		}
 	}
-	str = strings.Trim(str, "&") + APP_SECRET
+	str = strings.Trim(str, "&") + "&" + APP_SECRET
 
 	if sign != strings.ToUpper(hash.HashBySha1(str)) {
 		return errors.New("[sign] 失败")
