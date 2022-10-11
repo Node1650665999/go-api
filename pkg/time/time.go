@@ -2,11 +2,13 @@ package time
 
 import (
 	"fmt"
+	"github.com/spf13/cast"
+	"math"
 	"time"
 )
 
 var (
-	loc,_                      = time.LoadLocation("Asia/Shanghai")
+	Loc,_                      = time.LoadLocation("Asia/Shanghai")
 	LayoutSecond               = "2006-01-02 15:04:05"     //横杠区分 精度到秒
 	LayoutSecondZone           = "2006-01-02 15:04:05 MST" //横杠区分 进度到秒 加时区
 	LayoutDay                  = "2006-01-02"              //横杠区分 精度到天
@@ -16,6 +18,7 @@ var (
 	LayoutNumSecond            = "20060102150405"          //数字格式 精度到秒
 	LayoutNumDay               = "20060102"                //数字格式 精度到天
 	LayoutNumMonth             = "200601"                  //数字格式 精度到月
+	LayoutYear                 = "2006"                    //数字格式 精度到年
 	MonthBackslashDay          = "01/02"                   //反斜杠区分 精度到天
 )
 
@@ -106,37 +109,37 @@ func SetTimeout(d time.Duration, fn func(args ...interface{}), args ...interface
 
 
 //格式化时间：20060102 -> 2006-01-02
-func FormatNumDayToLayoutDay(value string) string {
+func FormatNumDayToLayoutDay(value string, loc *time.Location) string {
 	tm, _ := time.ParseInLocation(LayoutNumDay, value, loc)
 	return tm.Format(LayoutDay)
 }
 
 //格式化时间：2006-01-02 -> 20060102
-func FormatLayoutDayToNumDay(value string) string {
+func FormatLayoutDayToNumDay(value string, loc *time.Location) string {
 	tm, _ := time.ParseInLocation(LayoutDay, value, loc)
 	return tm.Format(LayoutNumDay)
 }
 
 //格式化时间：20060102 -> 2006/01/02
-func FormatNumDayToBackslashDay(value string) string {
+func FormatNumDayToBackslashDay(value string, loc *time.Location) string {
 	tm, _ := time.ParseInLocation(LayoutNumDay, value, loc)
 	return tm.Format(LayoutBackslashDay)
 }
 
 //格式化时间：200601 -> 2006-01
-func FormatNumMonthToLayoutMonth(value string) string {
+func FormatNumMonthToLayoutMonth(value string, loc *time.Location) string {
 	tm, _ := time.ParseInLocation(LayoutNumMonth, value, loc)
 	return tm.Format(LayoutMonth)
 }
 
 //格式化时间：2006-01 -> 200601
-func FormatLayoutMonthToNumMonth(value string) string {
+func FormatLayoutMonthToNumMonth(value string, loc *time.Location) string {
 	tm, _ := time.ParseInLocation(LayoutMonth, value, loc)
 	return tm.Format(LayoutNumMonth)
 }
 
 //格式化时间：200601 -> 2006/01
-func FormatNumMonthToBackslashMonth(value string) string {
+func FormatNumMonthToBackslashMonth(value string, loc *time.Location) string {
 	tm, _ := time.ParseInLocation(LayoutNumMonth, value, loc)
 	return tm.Format(LayoutBackslashMonth)
 }
@@ -170,8 +173,7 @@ func IsLastDayOfMonth(timeObj time.Time) bool {
 }
 
 //IsToday 判断传入的时间是否为今天
-func IsToday(timeObj time.Time) bool {
-	loc, _ := time.LoadLocation("Asia/Shanghai")
+func IsToday(timeObj time.Time, loc *time.Location) bool {
 	now := time.Now().In(loc)
 	return timeObj.Year() == now.Year() &&
 		timeObj.Month() == now.Month() &&
@@ -208,8 +210,28 @@ func GetLastDayTimeRange(tmObj time.Time) (time.Time, time.Time) {
 	return lastDayZeroTime, lastDayLastTime
 }
 
+//一年中的第几天
+func getDayOfYear(tmObj time.Time) int {
+	return tmObj.YearDay()
+}
+
+//一年中的第几周
+func getWeekOfYear(tmObj time.Time) int {
+	weekFloat := math.Ceil(float64(tmObj.YearDay()) / float64(7))
+	return cast.ToInt(weekFloat)
+}
+
+//一周的第几天(周几)
+func getWeekday(tmObj time.Time) int {
+	weekDay := int(tmObj.Weekday())
+	if weekDay == 0 {
+		weekDay = 7
+	}
+	return weekDay
+}
+
 //ParseTime 解析前端传入的时间区间
-func ParseTime(timeStart, timeEnd string, timeUnit int32)  (tmStart time.Time, tmEnd time.Time, err error) {
+func ParseTime(timeStart, timeEnd string, timeUnit int32, loc *time.Location)  (tmStart time.Time, tmEnd time.Time, err error) {
 	if timeStart == "" || timeEnd == "" {
 		switch timeUnit {
 		case 1:
