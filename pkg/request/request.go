@@ -26,17 +26,14 @@ func Input(c *gin.Context, key string) (interface{}, error) {
 	}
 
 	if "application/json" == contentType {
-		var bodyBytes []byte
-		if c.Request.Body != nil {
-			bodyBytes, _ = ioutil.ReadAll(c.Request.Body)
-		}
-		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 		if c.Request != nil && c.Request.Body != nil {
-			if err := json.NewDecoder(c.Request.Body).Decode(&postMap); err != nil {
+			var bodyBytes []byte
+			bodyBytes, _ = ioutil.ReadAll(c.Request.Body)
+			if err := json.NewDecoder(bytes.NewBuffer(bodyBytes)).Decode(&postMap); err != nil {
 				return nil, err
 			}
+			c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 		}
-		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 	} else if "multipart/form-data" == contentType {
 		if err := c.Request.ParseMultipartForm(defaultMemory); err != nil {
 			return nil, err
