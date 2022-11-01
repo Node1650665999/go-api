@@ -4,22 +4,23 @@ import (
 	"fmt"
 	"github.com/spf13/cast"
 	"math"
+	"strings"
 	"time"
 )
 
 var (
-	Loc,_                      = time.LoadLocation("Asia/Shanghai")
-	LayoutSecond               = "2006-01-02 15:04:05"     //横杠区分 精度到秒
-	LayoutSecondZone           = "2006-01-02 15:04:05 MST" //横杠区分 进度到秒 加时区
-	LayoutDay                  = "2006-01-02"              //横杠区分 精度到天
-	LayoutMonth                = "2006-01"                 //横杠区分 精度到月
-	LayoutBackslashDay         = "2006/01/02"              //反斜杠区分 精度到天
-	LayoutBackslashMonth       = "2006/01"                 //反斜杠区分 精度到月
-	LayoutNumSecond            = "20060102150405"          //数字格式 精度到秒
-	LayoutNumDay               = "20060102"                //数字格式 精度到天
-	LayoutNumMonth             = "200601"                  //数字格式 精度到月
-	LayoutYear                 = "2006"                    //数字格式 精度到年
-	MonthBackslashDay          = "01/02"                   //反斜杠区分 精度到天
+	Loc, _               = time.LoadLocation("Asia/Shanghai")
+	LayoutSecond         = "2006-01-02 15:04:05"     //横杠区分 精度到秒
+	LayoutSecondZone     = "2006-01-02 15:04:05 MST" //横杠区分 进度到秒 加时区
+	LayoutDay            = "2006-01-02"              //横杠区分 精度到天
+	LayoutMonth          = "2006-01"                 //横杠区分 精度到月
+	LayoutBackslashDay   = "2006/01/02"              //反斜杠区分 精度到天
+	LayoutBackslashMonth = "2006/01"                 //反斜杠区分 精度到月
+	LayoutNumSecond      = "20060102150405"          //数字格式 精度到秒
+	LayoutNumDay         = "20060102"                //数字格式 精度到天
+	LayoutNumMonth       = "200601"                  //数字格式 精度到月
+	LayoutYear           = "2006"                    //数字格式 精度到年
+	MonthBackslashDay    = "01/02"                   //反斜杠区分 精度到天
 )
 
 //CurrentDate 返回当前日期
@@ -106,7 +107,6 @@ func SetTimeout(d time.Duration, fn func(args ...interface{}), args ...interface
 		timer.Stop()
 	}()
 }
-
 
 //格式化时间：20060102 -> 2006-01-02
 func FormatNumDayToLayoutDay(value string, loc *time.Location) string {
@@ -230,8 +230,48 @@ func getWeekday(tmObj time.Time) int {
 	return weekDay
 }
 
+//GetTimeStartAndTimeEnd 传入一个时间对象，返回周一和周日的日期
+func GetTimeStartAndTimeEnd(timeObj time.Time) (int64, int64) {
+	offset := int(time.Monday - timeObj.Weekday())
+	if offset > 0 {
+		offset = -6
+	}
+	timeStart := time.Date(timeObj.Year(), timeObj.Month(), timeObj.Day(), 0, 0, 0, 0, time.Local).AddDate(0, 0, offset)
+	timeEnd := timeStart.AddDate(0, 0, 6)
+
+	ts := timeStart.Format("20060102")
+	te := timeEnd.Format("20060102")
+
+	return cast.ToInt64(ts), cast.ToInt64(te)
+}
+
+//SecondFormat 将秒格式化为几分几秒(xx:xx)
+func SecondFormat(second int64) string {
+	m := second / 60
+	s := second % 60
+	return fmt.Sprintf("%02d:%02d", m, s)
+}
+
+//ConvertSecond 将几分几秒(xx:xx) 转换为秒
+func ConvertSecond(str string) int64 {
+	arr := strings.Split(str, ":")
+	if len(arr) != 2 {
+		return 0
+	}
+	return cast.ToInt64(arr[0])*60 + cast.ToInt64(arr[1])
+}
+
+//DurationFormat 转换时间戳为时分秒
+func DurationFormat(second int64) string {
+	d := second / 60 / 60 / 24
+	h := (second / 60 / 60) % 24
+	m := (second / 60) % 60
+	s := second % 60
+	return fmt.Sprintf("%02d天%02d时%02d分%02d秒", d, h, m, s)
+}
+
 //ParseTime 解析前端传入的时间区间
-func ParseTime(timeStart, timeEnd string, timeUnit int32, loc *time.Location)  (tmStart time.Time, tmEnd time.Time, err error) {
+func ParseTime(timeStart, timeEnd string, timeUnit int32, loc *time.Location) (tmStart time.Time, tmEnd time.Time, err error) {
 	if timeStart == "" || timeEnd == "" {
 		switch timeUnit {
 		case 1:
@@ -269,8 +309,8 @@ func ParseTime(timeStart, timeEnd string, timeUnit int32, loc *time.Location)  (
 		tmStart = tmObj.AddDate(0, 0, -tmObj.Day()+1)
 		tmStart = time.Date(tmStart.Year(), tmStart.Month(), tmStart.Day(), 0, 0, 0, 0, loc)
 		//某月最后一日24点时间
-		tmEnd   = tmStart.AddDate(0, 1, -1)
-		tmEnd   = time.Date(tmEnd.Year(), tmEnd.Month(), tmEnd.Day(), 23, 59, 59, 0, loc)
+		tmEnd = tmStart.AddDate(0, 1, -1)
+		tmEnd = time.Date(tmEnd.Year(), tmEnd.Month(), tmEnd.Day(), 23, 59, 59, 0, loc)
 	}
 
 	if timeStart != timeEnd {
@@ -286,5 +326,3 @@ func ParseTime(timeStart, timeEnd string, timeUnit int32, loc *time.Location)  (
 
 	return tmStart, tmEnd, nil
 }
-
-
