@@ -287,6 +287,7 @@ func FillDate(ts, te string) []string {
 }
 
 //GetWeekStartAndWeekEnd 传入一年中的第几周,返回这周的开始时间与结束时间
+//refer:https://stackoverflow.com/questions/52300644/date-range-by-week-number-golang
 func GetWeekStartAndWeekEnd(year, week int) (int64, int64) {
 	// Start from the middle of the year:
 	t := time.Date(year, 7, 1, 0, 0, 0, 0, time.Local)
