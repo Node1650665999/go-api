@@ -108,37 +108,37 @@ func SetTimeout(d time.Duration, fn func(args ...interface{}), args ...interface
 	}()
 }
 
-//格式化时间：20060102 -> 2006-01-02
+//FormatNumDayToLayoutDay 格式化时间：20060102 -> 2006-01-02
 func FormatNumDayToLayoutDay(value string, loc *time.Location) string {
 	tm, _ := time.ParseInLocation(LayoutNumDay, value, loc)
 	return tm.Format(LayoutDay)
 }
 
-//格式化时间：2006-01-02 -> 20060102
+//FormatLayoutDayToNumDay 格式化时间：2006-01-02 -> 20060102
 func FormatLayoutDayToNumDay(value string, loc *time.Location) string {
 	tm, _ := time.ParseInLocation(LayoutDay, value, loc)
 	return tm.Format(LayoutNumDay)
 }
 
-//格式化时间：20060102 -> 2006/01/02
+//FormatNumDayToBackslashDay 格式化时间：20060102 -> 2006/01/02
 func FormatNumDayToBackslashDay(value string, loc *time.Location) string {
 	tm, _ := time.ParseInLocation(LayoutNumDay, value, loc)
 	return tm.Format(LayoutBackslashDay)
 }
 
-//格式化时间：200601 -> 2006-01
+//FormatNumMonthToLayoutMonth 格式化时间：200601 -> 2006-01
 func FormatNumMonthToLayoutMonth(value string, loc *time.Location) string {
 	tm, _ := time.ParseInLocation(LayoutNumMonth, value, loc)
 	return tm.Format(LayoutMonth)
 }
 
-//格式化时间：2006-01 -> 200601
+//FormatLayoutMonthToNumMonth  格式化时间：2006-01 -> 200601
 func FormatLayoutMonthToNumMonth(value string, loc *time.Location) string {
 	tm, _ := time.ParseInLocation(LayoutMonth, value, loc)
 	return tm.Format(LayoutNumMonth)
 }
 
-//格式化时间：200601 -> 2006/01
+//FormatNumMonthToBackslashMonth 格式化时间：200601 -> 2006/01
 func FormatNumMonthToBackslashMonth(value string, loc *time.Location) string {
 	tm, _ := time.ParseInLocation(LayoutNumMonth, value, loc)
 	return tm.Format(LayoutBackslashMonth)
@@ -210,39 +210,24 @@ func GetLastDayTimeRange(tmObj time.Time) (time.Time, time.Time) {
 	return lastDayZeroTime, lastDayLastTime
 }
 
-//一年中的第几天
-func getDayOfYear(tmObj time.Time) int {
+//GetDayOfYear 返回当前时间为一年中的第几天
+func GetDayOfYear(tmObj time.Time) int {
 	return tmObj.YearDay()
 }
 
-//一年中的第几周
-func getWeekOfYear(tmObj time.Time) int {
+//GetWeekOfYear 返回当前时间为一年中的第几周
+func GetWeekOfYear(tmObj time.Time) int {
 	weekFloat := math.Ceil(float64(tmObj.YearDay()) / float64(7))
 	return cast.ToInt(weekFloat)
 }
 
-//一周的第几天(周几)
-func getWeekday(tmObj time.Time) int {
+//GetWeekday 返回当前时间为一周的第几天(周几)
+func GetWeekday(tmObj time.Time) int {
 	weekDay := int(tmObj.Weekday())
 	if weekDay == 0 {
 		weekDay = 7
 	}
 	return weekDay
-}
-
-//GetTimeStartAndTimeEnd 传入一个时间对象，返回周一和周日的日期
-func GetTimeStartAndTimeEnd(timeObj time.Time) (int64, int64) {
-	offset := int(time.Monday - timeObj.Weekday())
-	if offset > 0 {
-		offset = -6
-	}
-	timeStart := time.Date(timeObj.Year(), timeObj.Month(), timeObj.Day(), 0, 0, 0, 0, time.Local).AddDate(0, 0, offset)
-	timeEnd := timeStart.AddDate(0, 0, 6)
-
-	ts := timeStart.Format("20060102")
-	te := timeEnd.Format("20060102")
-
-	return cast.ToInt64(ts), cast.ToInt64(te)
 }
 
 //SecondFormat 将秒格式化为几分几秒(xx:xx)
@@ -268,6 +253,86 @@ func DurationFormat(second int64) string {
 	m := (second / 60) % 60
 	s := second % 60
 	return fmt.Sprintf("%02d天%02d时%02d分%02d秒", d, h, m, s)
+}
+
+//GetTimeStartAndTimeEnd 返回周一和周日的日期
+func GetTimeStartAndTimeEnd(timeObj time.Time) (int64, int64) {
+	offset := int(time.Monday - timeObj.Weekday())
+	if offset > 0 {
+		offset = -6
+	}
+	timeStart := time.Date(timeObj.Year(), timeObj.Month(), timeObj.Day(), 0, 0, 0, 0, time.Local).AddDate(0, 0, offset)
+	timeEnd := timeStart.AddDate(0, 0, 6)
+
+	ts := timeStart.Format("20060102")
+	te := timeEnd.Format("20060102")
+
+	return cast.ToInt64(ts), cast.ToInt64(te)
+}
+
+//FillDate 返回两个日期间的日期列表
+func FillDate(ts, te string) []string {
+	dateList := make([]string, 0)
+	layout := "20060102"
+
+	timeStar, _ := time.ParseInLocation(layout, ts, time.Local)
+	timeEnd, _ := time.ParseInLocation(layout, te, time.Local)
+
+	for timeEnd.After(timeStar) {
+		dateList = append(dateList, timeStar.Format(layout))
+		timeStar = timeStar.AddDate(0, 0, 1)
+	}
+	dateList = append(dateList, timeEnd.Format(layout))
+	return dateList
+}
+
+//GetWeekStartAndWeekEnd 传入一年中的第几周,返回这周的开始时间与结束时间
+func GetWeekStartAndWeekEnd(year, week int) (int64, int64) {
+	// Start from the middle of the year:
+	t := time.Date(year, 7, 1, 0, 0, 0, 0, time.Local)
+
+	// Roll back to Monday:
+	if wd := t.Weekday(); wd == time.Sunday {
+		t = t.AddDate(0, 0, -6)
+	} else {
+		t = t.AddDate(0, 0, -int(wd)+1)
+	}
+
+	// Difference in weeks:
+	_, w := t.ISOWeek()
+	t = t.AddDate(0, 0, (week-w)*7)
+	return GetTimeStartAndTimeEnd(t)
+}
+
+//GetMaxPersistDays 统计一组日期中的最大连续天数
+func GetMaxPersistDays(days []string) int {
+	length := len(days)
+	if length <= 0 {
+		return 0
+	}
+
+	maxPersist := 1
+	temp := 1
+
+	for i := 1; i < length; i++ {
+		today, _ := time.ParseInLocation(LayoutNumDay, days[i], time.Local)
+		prevDay, _ := time.ParseInLocation(LayoutNumDay, days[i-1], time.Local)
+		subTime := today.Sub(prevDay)
+		if subTime.Hours()/24 == 1 {
+			temp++
+		} else {
+			if temp > maxPersist {
+				maxPersist = temp
+			}
+			temp = 1
+		}
+	}
+
+	if maxPersist > temp {
+		return maxPersist
+	}
+
+	return temp
 }
 
 //ParseTime 解析前端传入的时间区间
