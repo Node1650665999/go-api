@@ -38,7 +38,6 @@ func BaseName(filename string) string  {
 	return path.Base(filename)
 }*/
 
-
 //FileExist 判断文件是否存在
 func FileExist(path string) bool {
 	_, err := os.Stat(path)
@@ -69,7 +68,7 @@ func ReadFile(file string) ([]string, error) {
 
 // WriteFile 往 file中写入 content
 func WriteFile(file string, content string) (int, error) {
-	outputFile, _ := os.OpenFile(file, os.O_WRONLY|os.O_CREATE, 0666)
+	outputFile, _ := os.OpenFile(file, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 
 	defer outputFile.Close()
 
@@ -86,20 +85,20 @@ func WriteFile(file string, content string) (int, error) {
 
 // WriteFileSimple 以非缓冲的方式写入文件
 func WriteFileSimple(file string, content string) (int, error) {
-	outputFile, _ := os.OpenFile(file, os.O_WRONLY|os.O_CREATE, 0666)
+	outputFile, _ := os.OpenFile(file, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	defer outputFile.Close()
 	return outputFile.WriteString(content)
 }
 
 // FIlePutContent 将数据存入文件, 	如果目录不存在, 则创建
 func FIlePutContent(data []byte, to string) error {
-	dir :=  filepath.Dir(to)
+	dir := filepath.Dir(to)
 	err := MkDir(dir)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(to, data, 0644)
+	_, err = WriteFile(to, string(data))
 	if err != nil {
 		return err
 	}
@@ -130,14 +129,14 @@ func CopyFile(dstName string, srcName string) (int64, error) {
 }
 
 //RemoteDownload 实现下载文件到本地,获得网络文件的输入流以及本地文件的输出流 ,然后将输入流读取到输出流中
-func RemoteDownload(remote string,local string) error {
+func RemoteDownload(remote string, local string) error {
 	res, err := http.Get(remote)
 	if err != nil {
 		return fmt.Errorf("A error occurred: %v", err)
 	}
 	defer res.Body.Close()
 	// 获得get请求响应的reader对象
-	reader := bufio.NewReaderSize(res.Body, 32 * 1024)
+	reader := bufio.NewReaderSize(res.Body, 32*1024)
 
 	// 获得文件的writer对象
 	file, err := os.Create(local)
