@@ -9,7 +9,6 @@ import (
 )
 
 var (
-	Loc, _               = time.LoadLocation("Asia/Shanghai")
 	LayoutSecond         = "2006-01-02 15:04:05"     //横杠区分 精度到秒
 	LayoutSecondZone     = "2006-01-02 15:04:05 MST" //横杠区分 进度到秒 加时区
 	LayoutDay            = "2006-01-02"              //横杠区分 精度到天
@@ -25,53 +24,34 @@ var (
 
 //CurrentDate 返回当前日期
 func CurrentDate() string {
-	time := time.Now() //time.Time
-	return TimeFormat(time)
+	return time.Now().In(time.Local).Format(LayoutSecond)
 }
 
 //CurrentTimestamp 返回当前时间戳
 func CurrentTimestamp() int64 {
-	return time.Now().Unix() //获取当前时间
+	return time.Now().In(time.Local).Unix()
 }
 
-//TimestampInZone 基于时区获取 unix 时间戳
-// eg. timezone = Asia/Shanghai
-func TimestampInZone(timezone string) int64 {
-	l, _ := time.LoadLocation(timezone)
-	return time.Now().In(l).Unix() //获取当前时间
-}
-
-//Timestamp2Date 将时间戳转换为日期
-func Timestamp2Date(timestamp int64) string {
-	time := time.Unix(timestamp, 0) //time.Time
-	return TimeFormat(time)
-}
-
-//Date2Timestamp 将日期转换时间戳
-func Date2Timestamp(date string) int64 {
-	format := "2006-01-02 15:04:05"
-	loc, _ := time.LoadLocation("Local")                    //重要：获取时区
-	timeObj, err := time.ParseInLocation(format, date, loc) //指定日期转当地日期对象 类型为 time.Time
-	if err != nil {
-		panic(err)
+//TimestampToDate 时间戳转日期
+func TimestampToDate(timestamp int64, layout string) string {
+	if layout == "" {
+		layout = LayoutSecond
 	}
+	return time.Unix(timestamp, 0).In(time.Local).Format(layout)
+}
+
+//MsToDate 毫秒时间戳转日期
+func MsToDate(ms int64, layout string) string {
+	if layout == "" {
+		layout = LayoutSecond
+	}
+	return time.Unix(0, ms*int64(time.Millisecond)).Format(layout)
+}
+
+//DateToTimestamp 日期转时间戳
+func DateToTimestamp(date string, layout string) int64 {
+	timeObj, _ := time.ParseInLocation(layout, date, time.Local)
 	return timeObj.Unix()
-}
-
-// FormatDate 将time对象格式化为日期
-func FormatDate(time time.Time) string {
-	year := time.Year()     //年
-	month := time.Month()   //月
-	day := time.Day()       //日
-	hour := time.Hour()     //小时
-	minute := time.Minute() //分钟
-	second := time.Second() //秒
-	return fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d\n", year, month, day, hour, minute, second)
-}
-
-// TimeFormat 将time对象格式化为日期
-func TimeFormat(time time.Time) string {
-	return time.Format("2006-01-02 15:04:05")
 }
 
 // SetInterval 定时执行 fn
@@ -109,38 +89,38 @@ func SetTimeout(d time.Duration, fn func(args ...interface{}), args ...interface
 }
 
 //FormatNumDayToLayoutDay 格式化时间：20060102 -> 2006-01-02
-func FormatNumDayToLayoutDay(value string, loc *time.Location) string {
-	tm, _ := time.ParseInLocation(LayoutNumDay, value, loc)
+func FormatNumDayToLayoutDay(value string) string {
+	tm, _ := time.ParseInLocation(LayoutNumDay, value, time.Local)
 	return tm.Format(LayoutDay)
 }
 
 //FormatLayoutDayToNumDay 格式化时间：2006-01-02 -> 20060102
-func FormatLayoutDayToNumDay(value string, loc *time.Location) string {
-	tm, _ := time.ParseInLocation(LayoutDay, value, loc)
+func FormatLayoutDayToNumDay(value string) string {
+	tm, _ := time.ParseInLocation(LayoutDay, value, time.Local)
 	return tm.Format(LayoutNumDay)
 }
 
 //FormatNumDayToBackslashDay 格式化时间：20060102 -> 2006/01/02
-func FormatNumDayToBackslashDay(value string, loc *time.Location) string {
-	tm, _ := time.ParseInLocation(LayoutNumDay, value, loc)
+func FormatNumDayToBackslashDay(value string) string {
+	tm, _ := time.ParseInLocation(LayoutNumDay, value, time.Local)
 	return tm.Format(LayoutBackslashDay)
 }
 
 //FormatNumMonthToLayoutMonth 格式化时间：200601 -> 2006-01
-func FormatNumMonthToLayoutMonth(value string, loc *time.Location) string {
-	tm, _ := time.ParseInLocation(LayoutNumMonth, value, loc)
+func FormatNumMonthToLayoutMonth(value string) string {
+	tm, _ := time.ParseInLocation(LayoutNumMonth, value, time.Local)
 	return tm.Format(LayoutMonth)
 }
 
 //FormatLayoutMonthToNumMonth  格式化时间：2006-01 -> 200601
-func FormatLayoutMonthToNumMonth(value string, loc *time.Location) string {
-	tm, _ := time.ParseInLocation(LayoutMonth, value, loc)
+func FormatLayoutMonthToNumMonth(value string) string {
+	tm, _ := time.ParseInLocation(LayoutMonth, value, time.Local)
 	return tm.Format(LayoutNumMonth)
 }
 
 //FormatNumMonthToBackslashMonth 格式化时间：200601 -> 2006/01
-func FormatNumMonthToBackslashMonth(value string, loc *time.Location) string {
-	tm, _ := time.ParseInLocation(LayoutNumMonth, value, loc)
+func FormatNumMonthToBackslashMonth(value string) string {
+	tm, _ := time.ParseInLocation(LayoutNumMonth, value, time.Local)
 	return tm.Format(LayoutBackslashMonth)
 }
 
@@ -173,8 +153,8 @@ func IsLastDayOfMonth(timeObj time.Time) bool {
 }
 
 //IsToday 判断传入的时间是否为今天
-func IsToday(timeObj time.Time, loc *time.Location) bool {
-	now := time.Now().In(loc)
+func IsToday(timeObj time.Time) bool {
+	now := time.Now().In(time.Local)
 	return timeObj.Year() == now.Year() &&
 		timeObj.Month() == now.Month() &&
 		timeObj.Day() == now.Day()
@@ -246,8 +226,8 @@ func ConvertSecond(str string) int64 {
 	return cast.ToInt64(arr[0])*60 + cast.ToInt64(arr[1])
 }
 
-//DurationFormat 转换时间戳为时分秒
-func DurationFormat(second int64) string {
+//SecondFormatDate 转换秒为时分秒
+func SecondFormatDate(second int64) string {
 	d := second / 60 / 60 / 24
 	h := (second / 60 / 60) % 24
 	m := (second / 60) % 60
@@ -337,16 +317,16 @@ func GetMaxPersistDays(days []string) int {
 }
 
 //ParseTime 解析前端传入的时间区间
-func ParseTime(timeStart, timeEnd string, timeUnit int32, loc *time.Location) (tmStart time.Time, tmEnd time.Time, err error) {
+func ParseTime(timeStart, timeEnd string, timeUnit int32) (tmStart time.Time, tmEnd time.Time, err error) {
 	if timeStart == "" || timeEnd == "" {
 		switch timeUnit {
 		case 1:
 			//默认最近七天
-			tmEnd = time.Now().In(loc)
+			tmEnd = time.Now().In(time.Local)
 			tmStart = tmEnd.AddDate(0, 0, -6)
 		case 2:
 			//默认最近两个月
-			tmEnd = time.Now().In(loc)
+			tmEnd = time.Now().In(time.Local)
 			tmStart = tmEnd.AddDate(0, -1, 0)
 		}
 	}
@@ -354,37 +334,37 @@ func ParseTime(timeStart, timeEnd string, timeUnit int32, loc *time.Location) (t
 	//某日(timeStart=timeEnd)
 	if timeUnit == 2 && timeStart != "" && timeStart == timeEnd {
 		//某日0点时间
-		tmStart, err = time.ParseInLocation(LayoutDay, timeStart, loc)
+		tmStart, err = time.ParseInLocation(LayoutDay, timeStart, time.Local)
 		if err != nil {
 			return time.Time{}, time.Time{}, err
 		}
-		tmStart = time.Date(tmStart.Year(), tmStart.Month(), tmStart.Day(), 0, 0, 0, 0, loc)
+		tmStart = time.Date(tmStart.Year(), tmStart.Month(), tmStart.Day(), 0, 0, 0, 0, time.Local)
 
 		//某日24点时间
 		//tmEnd = tmStart.AddDate(0, 0, 1)
-		tmEnd = time.Date(tmStart.Year(), tmStart.Month(), tmStart.Day(), 23, 59, 59, 0, loc)
+		tmEnd = time.Date(tmStart.Year(), tmStart.Month(), tmStart.Day(), 23, 59, 59, 0, time.Local)
 	}
 
 	//某月(timeStart=timeEnd)
 	if timeUnit == 4 && timeStart != "" && timeStart == timeEnd {
-		tmObj, err := time.ParseInLocation(LayoutDay, timeStart, loc)
+		tmObj, err := time.ParseInLocation(LayoutDay, timeStart, time.Local)
 		if err != nil {
 			return time.Time{}, time.Time{}, err
 		}
 		//某月1日0点时间
 		tmStart = tmObj.AddDate(0, 0, -tmObj.Day()+1)
-		tmStart = time.Date(tmStart.Year(), tmStart.Month(), tmStart.Day(), 0, 0, 0, 0, loc)
+		tmStart = time.Date(tmStart.Year(), tmStart.Month(), tmStart.Day(), 0, 0, 0, 0, time.Local)
 		//某月最后一日24点时间
 		tmEnd = tmStart.AddDate(0, 1, -1)
-		tmEnd = time.Date(tmEnd.Year(), tmEnd.Month(), tmEnd.Day(), 23, 59, 59, 0, loc)
+		tmEnd = time.Date(tmEnd.Year(), tmEnd.Month(), tmEnd.Day(), 23, 59, 59, 0, time.Local)
 	}
 
 	if timeStart != timeEnd {
-		tmStart, err = time.ParseInLocation(LayoutDay, timeStart, loc)
+		tmStart, err = time.ParseInLocation(LayoutDay, timeStart, time.Local)
 		if err != nil {
 			return time.Time{}, time.Time{}, err
 		}
-		tmEnd, err = time.ParseInLocation(LayoutDay, timeEnd, loc)
+		tmEnd, err = time.ParseInLocation(LayoutDay, timeEnd, time.Local)
 		if err != nil {
 			return time.Time{}, time.Time{}, err
 		}
