@@ -196,7 +196,7 @@ func GetTimeRangeOfWeek(timeObj time.Time) (int64, int64) {
 	}
 	timeStart := time.Date(timeObj.Year(), timeObj.Month(), timeObj.Day(), 0, 0, 0, 0, time.Local).AddDate(0, 0, offset)
 	timeEnd := timeStart.AddDate(0, 0, 6)
-	timeEnd = time.Date(timeObj.Year(), timeObj.Month(), timeObj.Day(), 23, 59, 59, 0, time.Local)
+	timeEnd = time.Date(timeEnd.Year(), timeEnd.Month(), timeEnd.Day(), 23, 59, 59, 0, time.Local)
 
 	ts := timeStart.Format("20060102")
 	te := timeEnd.Format("20060102")
