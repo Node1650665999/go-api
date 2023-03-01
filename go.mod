@@ -12,7 +12,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/iancoleman/strcase v0.2.0
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
-	github.com/rabbitmq/amqp091-go v1.5.0 // indirect
+	github.com/rabbitmq/amqp091-go v1.5.0
 	github.com/shopspring/decimal v1.3.1
 	github.com/spf13/cast v1.4.1
 	github.com/spf13/cobra v1.3.0

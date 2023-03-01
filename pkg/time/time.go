@@ -3,7 +3,6 @@ package time
 import (
 	"fmt"
 	"github.com/spf13/cast"
-	"math"
 	"strings"
 	"time"
 )
@@ -160,15 +159,68 @@ func IsToday(timeObj time.Time) bool {
 		timeObj.Day() == now.Day()
 }
 
+//GetTimeRangeOfDay 获取某日0点时间和24点时间
+func GetTimeRangeOfDay(tmObj time.Time) (time.Time, time.Time) {
+	firstSecondObj := time.Date(tmObj.Year(), tmObj.Month(), tmObj.Day(), 0, 0, 0, 0, time.Local)
+	lastSecondObj := time.Date(tmObj.Year(), tmObj.Month(), tmObj.Day(), 23, 59, 59, 0, time.Local)
+	return firstSecondObj, lastSecondObj
+}
+
 //GetTimeRangeOfMonth 获取某月1日0点时间和最后一日24点时间
 func GetTimeRangeOfMonth(tmObj time.Time) (time.Time, time.Time) {
-	//某月1日0点时间和24点时间
 	firstDay := tmObj.AddDate(0, 0, -tmObj.Day()+1)
-	firstDayZeroTime := time.Date(firstDay.Year(), firstDay.Month(), firstDay.Day(), 0, 0, 0, 0, time.Local)
-	lastDay := firstDayZeroTime.AddDate(0, 1, -1)
-	lastDayLastTime := time.Date(lastDay.Year(), lastDay.Month(), lastDay.Day(), 23, 59, 59, 0, time.Local)
 
-	return firstDayZeroTime, lastDayLastTime
+	firstSecondObj := time.Date(firstDay.Year(), firstDay.Month(), firstDay.Day(), 0, 0, 0, 0, time.Local)
+
+	lastDay := firstSecondObj.AddDate(0, 1, -1)
+	lastSecondObj := time.Date(lastDay.Year(), lastDay.Month(), lastDay.Day(), 23, 59, 59, 0, time.Local)
+	return firstSecondObj, lastSecondObj
+}
+
+//GetTimeRangeOfYear 获取某年第一天0点时间和最后一天24点时间
+func GetTimeRangeOfYear(tmObj time.Time) (time.Time, time.Time) {
+	firstDay := tmObj.AddDate(0, -int(tmObj.Month())+1, -tmObj.Day()+1)
+
+	firstSecondObj := time.Date(firstDay.Year(), firstDay.Month(), firstDay.Day(), 0, 0, 0, 0, time.Local)
+
+	lastDay := firstSecondObj.AddDate(1, 0, -1)
+	lastSecondObj := time.Date(lastDay.Year(), lastDay.Month(), lastDay.Day(), 23, 59, 59, 0, time.Local)
+	return firstSecondObj, lastSecondObj
+}
+
+//GetTimeRangeOfWeek 返回某日所在的周一和周日的时间
+func GetTimeRangeOfWeek(timeObj time.Time) (int64, int64) {
+	offset := int(time.Monday - timeObj.Weekday())
+	if offset > 0 {
+		offset = -6
+	}
+	timeStart := time.Date(timeObj.Year(), timeObj.Month(), timeObj.Day(), 0, 0, 0, 0, time.Local).AddDate(0, 0, offset)
+	timeEnd := timeStart.AddDate(0, 0, 6)
+	timeEnd = time.Date(timeObj.Year(), timeObj.Month(), timeObj.Day(), 23, 59, 59, 0, time.Local)
+
+	ts := timeStart.Format("20060102")
+	te := timeEnd.Format("20060102")
+
+	return cast.ToInt64(ts), cast.ToInt64(te)
+}
+
+//GetWeekStartAndWeekEnd 传入一年中的第几周,返回这周的开始时间与结束时间
+//refer:https://stackoverflow.com/questions/52300644/date-range-by-week-number-golang
+func GetWeekStartAndWeekEnd(year, week int) (int64, int64) {
+	// Start from the middle of the year:
+	t := time.Date(year, 7, 1, 0, 0, 0, 0, time.Local)
+
+	// Roll back to Monday:
+	if wd := t.Weekday(); wd == time.Sunday {
+		t = t.AddDate(0, 0, -6)
+	} else {
+		t = t.AddDate(0, 0, -int(wd)+1)
+	}
+
+	// Difference in weeks:
+	_, w := t.ISOWeek()
+	t = t.AddDate(0, 0, (week-w)*7)
+	return GetTimeRangeOfWeek(t)
 }
 
 //GetFirstDayTimeRange 获取某月1日0点时间和24点时间
@@ -196,9 +248,8 @@ func GetDayOfYear(tmObj time.Time) int {
 }
 
 //GetWeekOfYear 返回当前时间为一年中的第几周
-func GetWeekOfYear(tmObj time.Time) int {
-	weekFloat := math.Ceil(float64(tmObj.YearDay()) / float64(7))
-	return cast.ToInt(weekFloat)
+func GetWeekOfYear(tmObj time.Time) (year, week int) {
+	return tmObj.ISOWeek()
 }
 
 //GetWeekday 返回当前时间为一周的第几天(周几)
@@ -235,21 +286,6 @@ func SecondFormatDate(second int64) string {
 	return fmt.Sprintf("%02d天%02d时%02d分%02d秒", d, h, m, s)
 }
 
-//GetTimeStartAndTimeEnd 返回周一和周日的日期
-func GetTimeStartAndTimeEnd(timeObj time.Time) (int64, int64) {
-	offset := int(time.Monday - timeObj.Weekday())
-	if offset > 0 {
-		offset = -6
-	}
-	timeStart := time.Date(timeObj.Year(), timeObj.Month(), timeObj.Day(), 0, 0, 0, 0, time.Local).AddDate(0, 0, offset)
-	timeEnd := timeStart.AddDate(0, 0, 6)
-
-	ts := timeStart.Format("20060102")
-	te := timeEnd.Format("20060102")
-
-	return cast.ToInt64(ts), cast.ToInt64(te)
-}
-
 //FillDate 返回两个日期间的日期列表
 func FillDate(ts, te string) []string {
 	dateList := make([]string, 0)
@@ -264,25 +300,6 @@ func FillDate(ts, te string) []string {
 	}
 	dateList = append(dateList, timeEnd.Format(layout))
 	return dateList
-}
-
-//GetWeekStartAndWeekEnd 传入一年中的第几周,返回这周的开始时间与结束时间
-//refer:https://stackoverflow.com/questions/52300644/date-range-by-week-number-golang
-func GetWeekStartAndWeekEnd(year, week int) (int64, int64) {
-	// Start from the middle of the year:
-	t := time.Date(year, 7, 1, 0, 0, 0, 0, time.Local)
-
-	// Roll back to Monday:
-	if wd := t.Weekday(); wd == time.Sunday {
-		t = t.AddDate(0, 0, -6)
-	} else {
-		t = t.AddDate(0, 0, -int(wd)+1)
-	}
-
-	// Difference in weeks:
-	_, w := t.ISOWeek()
-	t = t.AddDate(0, 0, (week-w)*7)
-	return GetTimeStartAndTimeEnd(t)
 }
 
 //GetMaxPersistDays 统计一组日期中的最大连续天数
