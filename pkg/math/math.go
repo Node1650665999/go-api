@@ -22,6 +22,6 @@ func FloatFormat(a, b, places int64) string {
 		return "0." + strings.Repeat("0", int(places))
 	}
 	div := decimal.NewFromFloat(float64(b))
-	dms, _ := decimal.NewFromFloat(float64(a)).Div(div).RoundFloor(2).Float64()
+	dms, _ := decimal.NewFromFloat(float64(a)).Div(div).RoundFloor(int32(places)).Float64()
 	return cast.ToString(dms)
 }

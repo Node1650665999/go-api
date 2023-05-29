@@ -333,59 +333,23 @@ func GetMaxPersistDays(days []string) int {
 	return temp
 }
 
-//ParseTime 解析前端传入的时间区间
-func ParseTime(timeStart, timeEnd string, timeUnit int32) (tmStart time.Time, tmEnd time.Time, err error) {
-	if timeStart == "" || timeEnd == "" {
-		switch timeUnit {
-		case 1:
-			//默认最近七天
-			tmEnd = time.Now().In(time.Local)
-			tmStart = tmEnd.AddDate(0, 0, -6)
-		case 2:
-			//默认最近两个月
-			tmEnd = time.Now().In(time.Local)
-			tmStart = tmEnd.AddDate(0, -1, 0)
+// DateChunk 将日期范围切分为一组日期数组
+func DateChunk(start, end time.Time, chunkSize int) [][]time.Time {
+	chunks := make([][]time.Time, 0)
+	chunk := make([]time.Time, 0)
+
+	// 循环遍历开始日期到结束日期之间的每一天
+	for start.Before(end) || start.Equal(end) {
+		chunk = append(chunk, start)
+
+		// 如果切块大小已满或已达到结束日期，则将当前切块添加到切块数组中，并创建新的切块
+		if len(chunk) == chunkSize || start.Equal(end) {
+			chunks = append(chunks, chunk)
+			chunk = make([]time.Time, 0)
 		}
+
+		start = start.AddDate(0, 0, 1)
 	}
 
-	//某日(timeStart=timeEnd)
-	if timeUnit == 2 && timeStart != "" && timeStart == timeEnd {
-		//某日0点时间
-		tmStart, err = time.ParseInLocation(LayoutDay, timeStart, time.Local)
-		if err != nil {
-			return time.Time{}, time.Time{}, err
-		}
-		tmStart = time.Date(tmStart.Year(), tmStart.Month(), tmStart.Day(), 0, 0, 0, 0, time.Local)
-
-		//某日24点时间
-		//tmEnd = tmStart.AddDate(0, 0, 1)
-		tmEnd = time.Date(tmStart.Year(), tmStart.Month(), tmStart.Day(), 23, 59, 59, 0, time.Local)
-	}
-
-	//某月(timeStart=timeEnd)
-	if timeUnit == 4 && timeStart != "" && timeStart == timeEnd {
-		tmObj, err := time.ParseInLocation(LayoutDay, timeStart, time.Local)
-		if err != nil {
-			return time.Time{}, time.Time{}, err
-		}
-		//某月1日0点时间
-		tmStart = tmObj.AddDate(0, 0, -tmObj.Day()+1)
-		tmStart = time.Date(tmStart.Year(), tmStart.Month(), tmStart.Day(), 0, 0, 0, 0, time.Local)
-		//某月最后一日24点时间
-		tmEnd = tmStart.AddDate(0, 1, -1)
-		tmEnd = time.Date(tmEnd.Year(), tmEnd.Month(), tmEnd.Day(), 23, 59, 59, 0, time.Local)
-	}
-
-	if timeStart != timeEnd {
-		tmStart, err = time.ParseInLocation(LayoutDay, timeStart, time.Local)
-		if err != nil {
-			return time.Time{}, time.Time{}, err
-		}
-		tmEnd, err = time.ParseInLocation(LayoutDay, timeEnd, time.Local)
-		if err != nil {
-			return time.Time{}, time.Time{}, err
-		}
-	}
-
-	return tmStart, tmEnd, nil
+	return chunks
 }
