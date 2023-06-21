@@ -6,8 +6,8 @@ import (
 	"reflect"
 )
 
-//MapToSlice map转数组
-func MapToSlice(mp interface{}) interface{} {
+//MapToArray map转数组
+func MapToArray(mp interface{}) interface{} {
 	mpType := reflect.TypeOf(mp)
 	if mpType.Kind() != reflect.Map {
 		panic("the mp type must be map")
@@ -18,7 +18,6 @@ func MapToSlice(mp interface{}) interface{} {
 	if length == 0 {
 		return nil
 	}
-
 
 	//获得slice对应类型
 	sliceT := reflect.SliceOf(mpType.Elem())
@@ -33,8 +32,8 @@ func MapToSlice(mp interface{}) interface{} {
 	return sliceV.Interface()
 }
 
-//MapToSliceWithKeys map转数组并以给定的 keys 排序
-func MapToSliceWithKeys(mp interface{}, sortKeys interface{}) interface{} {
+//MapToArraySort map转数组并以给定的 keys 排序
+func MapToArraySort(mp interface{}, sortKeys interface{}) interface{} {
 	mpType := reflect.TypeOf(mp)
 	if mpType.Kind() != reflect.Map {
 		panic("the mp type must be map")
@@ -67,8 +66,8 @@ func MapToSliceWithKeys(mp interface{}, sortKeys interface{}) interface{} {
 	return sliceV.Interface()
 }
 
-//SliceToMap 根据传入的key将数组转换为map
-func SliceToMap(slice interface{}, keyName string) interface{} {
+//ArrayToMap 根据传入的key将数组转换为map
+func ArrayToMap(slice interface{}, keyName string) interface{} {
 	sliceType := reflect.TypeOf(slice)
 	if sliceType.Kind() != reflect.Slice {
 		panic("the slice type must be slice")
@@ -99,8 +98,8 @@ func SliceToMap(slice interface{}, keyName string) interface{} {
 	return mapV.Interface()
 }
 
-//SlicePaging 实现数组分页
-func SlicePaging(slice interface{}, page, pageSize int) (data interface{}, paging map[string]int) {
+//ArrayPaging 实现数组分页
+func ArrayPaging(slice interface{}, page, pageSize int) (data interface{}, paging map[string]int) {
 	sliceType := reflect.TypeOf(slice)
 	if sliceType.Kind() != reflect.Slice {
 		panic("the slice type must be slice")
@@ -158,9 +157,8 @@ func SlicePaging(slice interface{}, page, pageSize int) (data interface{}, pagin
 	return newSlice.Interface(), paging
 }
 
-
-//SliceColumn 从二维数组中查找某个值
-func SliceColumn(arrMap interface{}, field interface{}) (values []string) {
+//ArrayColumn 从二维数组中查找某个值
+func ArrayColumn(arrMap interface{}, field interface{}) (values []string) {
 	list := arrMap.([]map[string]interface{})
 	for row := range list {
 		for key, val := range list[row] {
@@ -172,8 +170,8 @@ func SliceColumn(arrMap interface{}, field interface{}) (values []string) {
 	return values
 }
 
-//SliceUnique 数组去重
-func SliceUnique(tmp interface{}) interface{} {
+//ArrayUnique 数组去重
+func ArrayUnique(tmp interface{}) interface{} {
 	switch arr := tmp.(type) {
 	case []string:
 		result := make([]string, 0, len(arr))
@@ -239,8 +237,8 @@ func SliceUnique(tmp interface{}) interface{} {
 	return nil
 }
 
-//InSlice 数组中是否包含某个元素
-func InSlice(need interface{}, haystack interface{}) bool {
+//InArray 数组中是否包含某个元素
+func InArray(need interface{}, haystack interface{}) bool {
 	switch key := need.(type) {
 	case int:
 		for _, item := range haystack.([]int) {
@@ -278,5 +276,25 @@ func InSlice(need interface{}, haystack interface{}) bool {
 	return false
 }
 
+func ArrayChunk(arr interface{}, chunkSize int) interface{} {
+	v := reflect.ValueOf(arr)
 
+	if v.Kind() != reflect.Slice {
+		return nil
+	}
 
+	chunkType := v.Type().Elem()
+	chunks := reflect.MakeSlice(reflect.SliceOf(chunkType), 0, 0)
+
+	for i := 0; i < v.Len(); i += chunkSize {
+		end := i + chunkSize
+		if end > v.Len() {
+			end = v.Len()
+		}
+
+		chunk := v.Slice(i, end)
+		chunks = reflect.Append(chunks, chunk)
+	}
+
+	return chunks.Interface()
+}
