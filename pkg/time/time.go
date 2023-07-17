@@ -333,6 +333,26 @@ func GetMaxPersistDays(days []string) int {
 	return temp
 }
 
+//GetTimeOffset 根据时区返回时间偏移量，例如传入 Asia/Shanghai 返回 +08:00
+func GetTimeOffset(timezone string) (string, error) {
+	loc, err := time.LoadLocation(timezone)
+	if err != nil {
+		return "", err
+	}
+
+	// 获取当前时间
+	currentTime := time.Now().In(loc)
+
+	// 获取时区偏移量
+	_, offset := currentTime.Zone()
+	offsetHours := offset / 3600
+	offsetMinutes := (offset % 3600) / 60
+
+	// 构建偏移量字符串
+	offsetStr := fmt.Sprintf("%+.2d:%.2d", offsetHours, offsetMinutes)
+	return offsetStr, nil
+}
+
 // DateChunk 将日期范围切分为一组日期数组
 func DateChunk(start, end time.Time, chunkSize int) [][]time.Time {
 	chunks := make([][]time.Time, 0)

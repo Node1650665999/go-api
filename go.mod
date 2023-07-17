@@ -9,7 +9,6 @@ require (
 	github.com/go-playground/locales v0.14.0
 	github.com/go-playground/universal-translator v0.18.0
 	github.com/go-playground/validator/v10 v10.9.0
-	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/iancoleman/strcase v0.2.0
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
