@@ -4,9 +4,9 @@ package redis
 import (
 	"context"
 	"fmt"
-	redis "github.com/go-redis/redis/v8"
 	"gin-api/pkg/config"
 	"gin-api/pkg/logger"
+	redis "github.com/go-redis/redis/v8"
 
 	"sync"
 	"time"
@@ -61,8 +61,8 @@ func NewClient(address string, password string, username string, dbIndex int) *R
 //Lock 获取锁
 func (rds *RedisClient) Lock(key string, expire time.Duration) bool {
 	lockValue := 1
-	err := rds.Client.SetNX(rds.Ctx, key, lockValue, expire).Err()
-	if err != nil {
+	ok, err := rds.Client.SetNX(rds.Ctx, key, lockValue, expire).Result()
+	if !ok {
 		logger.Log("Lock", err.Error())
 		//获取锁失败后，检查是不是死锁
 		if rds.Client.TTL(rds.Ctx, key).Val() == time.Duration(-1) {
