@@ -7,6 +7,7 @@ import (
 	"gin-api/pkg/config"
 	"gin-api/pkg/logger"
 	redis "github.com/go-redis/redis/v8"
+	"github.com/spf13/cast"
 
 	"sync"
 	"time"
@@ -61,6 +62,7 @@ func NewClient(address string, password string, username string, dbIndex int) *R
 //Lock 获取锁
 func (rds *RedisClient) Lock(key string, expire time.Duration) bool {
 	lockValue := 1
+	//Note: 这里不能使用 .Err() 来判断是否加锁成功
 	ok, err := rds.Client.SetNX(rds.Ctx, key, lockValue, expire).Result()
 	if !ok {
 		logger.Log("Lock", err.Error())
@@ -236,4 +238,43 @@ func (rds RedisClient) Decrement(parameters ...interface{}) bool {
 		return false
 	}
 	return true
+}
+
+//CountLimiter 基于计数器的限流
+func (rds *RedisClient) CountLimiter(key string, limit int64, expire time.Duration) error {
+	lockKey := fmt.Sprintf("locked:%v", key)
+	for {
+		ok, err := rds.Client.SetNX(rds.Ctx, lockKey, 1, expire).Result()
+		if err != nil {
+			return fmt.Errorf("SetNX err: %v", err)
+		}
+
+		//上锁成功
+		if ok {
+			//获取锁后有可能已达到limit的限值
+			cnt := cast.ToInt64(rds.Get(key))
+			if cnt >= limit {
+				rds.Del(lockKey)
+				return fmt.Errorf("locked but exceeded")
+			}
+
+			//计数器自增
+			_, e := rds.Client.Incr(rds.Ctx, key).Result()
+			if e != nil {
+				rds.Del(lockKey)
+				return fmt.Errorf("incr fail: %v", e)
+			}
+			rds.Client.Expire(rds.Ctx, key, expire)
+
+			// 释放锁
+			rds.Del(lockKey)
+			return nil
+		} else {
+			//重试获取锁
+			cnt := cast.ToInt64(rds.Get(key))
+			if cnt >= limit {
+				return fmt.Errorf("limit exceeded")
+			}
+		}
+	}
 }
